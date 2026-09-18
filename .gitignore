@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.idea/
+.vscode/
+node_modules/
+vendor/
+
+# Documentation kept local
+/*.md
+!/README.md
+/docs/

@@ -1,0 +1,23 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * The console entry point.
+ *
+ * This file did not exist. Every `php artisan devradar:*` command in the
+ * documentation, every queue worker in docker-compose.yml and every backend
+ * health check invoked a binary that was not there.
+ */
+
+use Symfony\Component\Console\Input\ArgvInput;
+
+define('LARAVEL_START', microtime(true));
+
+require __DIR__ . '/vendor/autoload.php';
+
+/** @var Illuminate\Foundation\Application $app */
+$app = require_once __DIR__ . '/bootstrap/app.php';
+
+exit($app->handleCommand(new ArgvInput()));

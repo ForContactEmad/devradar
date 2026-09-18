@@ -1,0 +1,32 @@
+# Keep the build context small and free of things that must not ship.
+#
+# Without this, `docker build` uploads the whole working tree to the daemon --
+# vendor, .git, storage logs -- which is slow and, in .env's case, a way to
+# bake a secret into an image layer.
+
+.env
+.env.*
+!.env.example
+
+vendor/
+node_modules/
+
+.git/
+.gitignore
+
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+# لكن المجلدات نفسها يجب أن تصل إلى الصورة: Laravel يرفض الإقلاع بدون
+# bootstrap/cache قابل للكتابة، وهو ما أوقف أول تشغيل حقيقي للمشروع.
+!storage/**/.gitkeep
+!bootstrap/cache/.gitkeep
+
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+Dockerfile
+.dockerignore

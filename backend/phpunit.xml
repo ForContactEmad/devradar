@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache">
+    <testsuites>
+        <!-- Pure domain logic. No I/O, no framework, no database. Fast.
+             Most tests live here because most logic lives here. -->
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+
+        <!-- Adapters and repositories against a real PostgreSQL container.
+             External HTTP is always faked. -->
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+
+        <!-- Full pipeline over fixtures using FakePostProvider and
+             FakeLlmProvider. Zero external calls, zero cost. -->
+        <testsuite name="Pipeline">
+            <directory>tests/Pipeline</directory>
+        </testsuite>
+
+        <!-- HTTP contract tests against the read model. -->
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+
+    <source>
+        <include>
+            <directory>src</directory>
+            <directory>app</directory>
+        </include>
+    </source>
+
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="DB_CONNECTION" value="pgsql"/>
+        <env name="DB_DATABASE" value="devradar_test"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+
+        <!-- Cost safety: the test suite must never be able to spend money.
+             The fake provider is the only permitted post source in tests,
+             and the budget ceiling is zero so any real call would refuse. -->
+        <env name="DEVRADAR_AI_PROVIDER" value="fake"/>
+        <env name="DEVRADAR_POST_PROVIDER" value="fake"/>
+        <env name="DEVRADAR_MONTHLY_CEILING_USD" value="0"/>
+        <env name="X_API_BEARER_TOKEN" value=""/>
+    </php>
+</phpunit>

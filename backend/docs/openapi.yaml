@@ -1,0 +1,318 @@
+openapi: 3.1.0
+
+info:
+  title: DevRadar API
+  version: "1.0.0"
+  description: |
+    Newly launched software projects discovered on X within a rolling
+    seven-day window, classified, ranked and served.
+
+    **Response envelope.** Every success is `{data, meta}`; every error is
+    `{error, meta}`. A consumer writes one success path and one error path
+    rather than discovering that one endpoint returns a bare array and
+    another a wrapped object. Every response carries `meta.request_id`,
+    which is what connects a bug report to a log line.
+
+    **Trending, latest and search are not separate resources.** They are
+    orderings and filters of one collection, so they are query parameters on
+    `/projects`. A `/projects/trending` endpoint would be a second URL for
+    the same set of things, and consumers would then have to learn which
+    filters worked on which one.
+
+    **Versioning is in the URI.** Header versioning is arguably purer REST,
+    but a URI version is visible in a browser, a log line and a pasted curl
+    command, and is cacheable by any intermediary without `Vary` gymnastics.
+
+    **Everything public is free to serve.** The read path queries precomputed
+    serving tables and cannot reach X, GitHub or a model. A page view never
+    spends money.
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: Projects
+  - name: Taxonomy
+  - name: Statistics
+  - name: Admin
+    description: Operational endpoints. Authentication required.
+
+paths:
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      description: |
+        The feed. Ordering, filtering and search are all expressed here.
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - name: sort
+          in: query
+          description: |
+            `score` is the composite ranking and the default. `trending` is
+            growth-weighted — what is accelerating, which is a different
+            question from what is currently biggest. `relevance` requires `q`
+            and returns 422 without it, rather than silently falling back.
+          schema:
+            type: string
+            enum: [score, trending, latest, oldest, engagement, relevance]
+            default: score
+        - { name: q, in: query, description: "Full-text search. Minimum 2 characters.", schema: { type: string, minLength: 2, maxLength: 200 } }
+        - { name: category, in: query, description: "Repeatable, or comma-separated.", schema: { type: array, items: { type: string } }, style: form, explode: true }
+        - { name: technology, in: query, description: "Repeatable, or comma-separated.", schema: { type: array, items: { type: string } }, style: form, explode: true }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: has_repository, in: query, schema: { type: boolean } }
+        - { name: min_score, in: query, schema: { type: number, minimum: 0, maximum: 100 } }
+        - name: within_days
+          in: query
+          description: "Capped at 7: the feed is a rolling seven-day window, and accepting 30 would return seven days while reporting otherwise."
+          schema: { type: integer, minimum: 1, maximum: 7 }
+      responses:
+        "200":
+          description: |
+            A page of projects. A page past the end returns an empty `data`
+            array, not 404 — clients that walk until empty must not break,
+            and the collection plainly exists.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectPage" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /projects/{slug}:
+    get:
+      tags: [Projects]
+      summary: Get one project
+      description: |
+        Addressed by slug rather than id: slugs are stable, human-readable
+        and safe to publish. Includes the score breakdown, because ranking is
+        what people disagree with and "why is this above that" should be
+        answerable from the API.
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string, pattern: "^[A-Za-z0-9-]+$" } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/ProjectDetail" }
+                  meta: { $ref: "#/components/schemas/Meta" }
+          description: The project.
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /categories:
+    get:
+      tags: [Taxonomy]
+      summary: List categories with project counts
+      description: |
+        Counts are scoped to visible projects in the window. A category list
+        without them offers choices that return nothing.
+      parameters:
+        - { name: include_empty, in: query, schema: { type: boolean, default: false } }
+      responses:
+        "200":
+          content: { application/json: { schema: { $ref: "#/components/schemas/TaxonomyList" } } }
+          description: Categories.
+
+  /technologies:
+    get:
+      tags: [Taxonomy]
+      summary: List technologies with project counts
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+      responses:
+        "200":
+          content: { application/json: { schema: { $ref: "#/components/schemas/TaxonomyList" } } }
+          description: Technologies.
+
+  /stats:
+    get:
+      tags: [Statistics]
+      summary: Feed statistics
+      description: |
+        Public numbers only. Spend, budget position and per-query yield are
+        operational figures behind the admin boundary.
+      responses:
+        "200":
+          content: { application/json: { schema: { $ref: "#/components/schemas/StatsResponse" } } }
+          description: Statistics for the current window.
+
+  /admin/search-runs:
+    get:
+      tags: [Admin]
+      summary: Ingestion run history and spend
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { name: status, in: query, schema: { type: string, enum: [running, completed, failed, aborted_budget] } }
+      responses:
+        "200": { description: Paginated run history. }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /admin/health:
+    get:
+      tags: [Admin]
+      summary: Pipeline health per stage
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: hours, in: query, schema: { type: integer, minimum: 1, maximum: 168, default: 24 } }
+      responses:
+        "200": { description: Per-stage run counts, failures and last success. }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+
+  responses:
+    ValidationError:
+      description: |
+        Parameters failed validation. `error.details` carries field-level
+        messages where the HTTP layer produced them.
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    NotFound:
+      description: |
+        No such resource. Never existed, aged out of the window and hidden by
+        an admin are deliberately indistinguishable — naming which would leak
+        a moderation decision.
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    Unauthenticated:
+      description: Authentication required.
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    InternalError:
+      description: |
+        Something failed on our side. The message is deliberately generic —
+        an internal message can carry schema details a caller has no business
+        seeing. Quote `meta.request_id` when reporting.
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+
+  schemas:
+    Meta:
+      type: object
+      required: [request_id, api_version]
+      properties:
+        request_id: { type: string }
+        api_version: { type: string, example: v1 }
+
+    Error:
+      type: object
+      required: [error, meta]
+      properties:
+        error:
+          type: object
+          required: [type, message]
+          properties:
+            type:
+              type: string
+              enum: [validation_failed, invalid_query, not_found, unauthenticated, rate_limited, internal_error]
+            message: { type: string }
+            details: { type: object, additionalProperties: true }
+        meta: { $ref: "#/components/schemas/Meta" }
+
+    Links:
+      type: object
+      properties:
+        self: { type: [string, "null"] }
+        first: { type: [string, "null"] }
+        last: { type: [string, "null"] }
+        next: { type: [string, "null"] }
+        prev: { type: [string, "null"] }
+
+    ProjectLinks:
+      type: object
+      properties:
+        repository: { type: [string, "null"], description: "Null when the post linked no repository. Never fabricated." }
+        website: { type: [string, "null"] }
+        demo: { type: [string, "null"] }
+        source_post: { type: string }
+
+    ProjectSummary:
+      type: object
+      required: [slug, name, category, technologies, links, score, discovered_at]
+      properties:
+        slug: { type: string }
+        name: { type: string }
+        description: { type: [string, "null"] }
+        category: { type: string }
+        project_type: { type: [string, "null"] }
+        technologies:
+          type: array
+          items: { type: string }
+          description: "Only technologies evidenced in the post or its URLs. An empty array means the post said nothing, not that the project uses nothing."
+        links: { $ref: "#/components/schemas/ProjectLinks" }
+        author: { type: [string, "null"] }
+        score: { type: number, description: "0-100 composite ranking." }
+        stars: { type: [integer, "null"] }
+        discovered_at: { type: string, format: date-time }
+
+    ProjectDetail:
+      allOf:
+        - $ref: "#/components/schemas/ProjectSummary"
+        - type: object
+          properties:
+            score_breakdown:
+              type: [object, "null"]
+              additionalProperties: true
+              description: "Per-component values, weights and contributions."
+            extraction_confidence: { type: [number, "null"] }
+            published_at: { type: string, format: date-time }
+            repository:
+              type: [object, "null"]
+              description: "Stored GitHub data. `fetched_at` distinguishes stale data from missing data."
+              additionalProperties: true
+            history:
+              type: array
+              items: { type: object, additionalProperties: true }
+
+    ProjectPage:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/ProjectSummary" } }
+        meta:
+          allOf:
+            - $ref: "#/components/schemas/Meta"
+            - type: object
+              properties:
+                page: { type: integer }
+                per_page: { type: integer }
+                total: { type: integer }
+                last_page: { type: integer }
+                has_more: { type: boolean }
+        links: { $ref: "#/components/schemas/Links" }
+
+    TaxonomyList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              slug: { type: string }
+              name: { type: string }
+              kind: { type: string }
+              project_count: { type: integer }
+        meta: { $ref: "#/components/schemas/Meta" }
+
+    StatsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            window_days: { type: integer }
+            projects_in_window: { type: integer }
+            projects_published_today: { type: integer }
+            projects_with_repository: { type: integer }
+            average_score: { type: number }
+            last_published_at: { type: [string, "null"] }
+            top_categories: { type: array, items: { type: object } }
+            top_technologies: { type: array, items: { type: object } }
+        meta: { $ref: "#/components/schemas/Meta" }

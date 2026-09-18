@@ -1,0 +1,13 @@
+{
+  "data": [
+    {
+      "id": "1800000000000000009",
+      "text": "legacy shaped payload",
+      "author_id": "500009",
+      "created_at": "2026-09-08T08:00:00.000Z",
+      "public_metrics": { "like_count": 5, "retweet_count": 9, "reply_count": 1, "quote_count": 0 },
+      "referenced_tweets": [ { "type": "replied_to", "id": "1799000000000000000" } ]
+    }
+  ],
+  "meta": { "result_count": 1 }
+}

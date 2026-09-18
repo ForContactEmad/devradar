@@ -1,0 +1,35 @@
+{
+  "data": [
+    {
+      "id": "1800000000000000003",
+      "text": "Introducing a tiny Rust scheduler. https://t.co/def456",
+      "author_id": "500003",
+      "created_at": "2026-09-07T22:40:00.000Z",
+      "lang": "en",
+      "public_metrics": {
+        "like_count": 88,
+        "repost_count": 14,
+        "reply_count": 6,
+        "quote_count": 2,
+        "bookmark_count": 21,
+        "impression_count": 7100
+      },
+      "entities": {
+        "urls": [
+          { "url": "https://t.co/def456", "expanded_url": "https://github.com/rs/tinysched" }
+        ]
+      }
+    }
+  ],
+  "includes": {
+    "users": [
+      { "id": "500003", "username": "rustacean", "name": "Rustacean", "verified": false,
+        "public_metrics": { "followers_count": 640, "following_count": 88, "post_count": 300, "listed_count": 4 } }
+    ]
+  },
+  "meta": {
+    "newest_id": "1800000000000000003",
+    "oldest_id": "1800000000000000003",
+    "result_count": 1
+  }
+}

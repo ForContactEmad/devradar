@@ -1,0 +1,1 @@
+{ "title": "Invalid Request", "detail": "One or more parameters to your request was invalid.", "type": "https://api.x.com/2/problems/invalid-request", "status": 400 }

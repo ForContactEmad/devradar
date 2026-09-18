@@ -1,0 +1,19 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+.nuxt/
+.output/
+.data/
+
+.git/
+.gitignore
+
+# The development mock API never belongs in a deployed image: it serves
+# fabricated data with no authentication.
+mock-api/
+
+tests/
+Dockerfile
+.dockerignore

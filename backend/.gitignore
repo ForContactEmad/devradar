@@ -1,0 +1,16 @@
+/vendor
+/node_modules
+/public/build
+/public/hot
+/storage/*.key
+/storage/logs/*.log
+/storage/framework
+/.phpunit.cache
+.env
+.env.*
+!.env.example
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+composer.lock

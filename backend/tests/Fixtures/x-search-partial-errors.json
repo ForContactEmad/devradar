@@ -1,0 +1,21 @@
+{
+  "data": [
+    {
+      "id": "1800000000000000010",
+      "text": "valid post",
+      "author_id": "500010",
+      "created_at": "2026-09-08T07:00:00.000Z",
+      "public_metrics": { "like_count": 1, "repost_count": 0, "reply_count": 0, "quote_count": 0 }
+    },
+    { "id": "1800000000000000011", "text": "missing created_at", "author_id": "500011" }
+  ],
+  "errors": [
+    {
+      "type": "https://api.x.com/2/problems/resource-not-found",
+      "title": "Not Found Error",
+      "detail": "Could not find user with id: [500099].",
+      "resource_type": "user"
+    }
+  ],
+  "meta": { "result_count": 2 }
+}
