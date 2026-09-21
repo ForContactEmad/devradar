@@ -48,6 +48,10 @@ final readonly class EloquentClassificationRepository implements ClassificationR
                 ->whereNull('purged_at')
                 ->orderBy('posted_at')
                 ->limit($limit)
+                // FOR UPDATE SKIP LOCKED, written out because Laravel has no
+                // skipLocked() helper: lockForUpdate() emits FOR UPDATE only,
+                // and there is no builder method that appends SKIP LOCKED.
+                // Passing the clause to lock() is the documented way.
                 ->lock('for update skip locked')
                 ->get();
 

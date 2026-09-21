@@ -19,6 +19,13 @@ use DevRadar\Infrastructure\Persistence\EloquentStatisticsRepository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
+/**
+ * Wires the read path: the query services behind the HTTP API.
+ *
+ * Nothing registered here can reach a paid provider. That is structural, not a
+ * convention -- the read path depends only on query repositories, so rendering
+ * a page is incapable of spending money.
+ */
 final class ApiServiceProvider extends ServiceProvider
 {
     public function register(): void

@@ -8,6 +8,13 @@ use DevRadar\Domain\Port\SearchRunQueryRepositoryInterface;
 use DevRadar\Domain\Query\Paginated;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Read side of the collection ledger, for the admin endpoints.
+ *
+ * Answers "what did each paid search return and cost" and "which stages are
+ * healthy". Read-only: the ledger is written by the collection runner and the
+ * stage recorder, never from here.
+ */
 final readonly class EloquentSearchRunQueryRepository implements SearchRunQueryRepositoryInterface
 {
     /** @return Paginated<array<string, mixed>> */

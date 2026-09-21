@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace DevRadar\Domain\Statistics;
 
+/**
+ * A project as it appears in a statistics ranking -- the top-N lists on the
+ * stats page.
+ *
+ * Deliberately smaller than the full project resource: a ranking needs a name,
+ * a slug to link to and the value it was ranked by, not the whole record.
+ */
 final readonly class RankedProject
 {
     public function __construct(

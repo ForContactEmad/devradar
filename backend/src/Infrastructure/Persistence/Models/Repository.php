@@ -7,6 +7,12 @@ namespace DevRadar\Infrastructure\Persistence\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Eloquent model for a source repository linked to one or more projects.
+ *
+ * Kept for relationship navigation only; enrichment reads and writes through
+ * DB::table().
+ */
 class Repository extends Model
 {
     protected $table = 'repositories';

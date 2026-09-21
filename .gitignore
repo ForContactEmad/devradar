@@ -8,7 +8,11 @@
 node_modules/
 vendor/
 
-# Documentation kept local
+# Documentation kept local — only project code is published
 /*.md
-!/README.md
 /docs/
+
+# Build output
+.nuxt/
+.output/
+.data/

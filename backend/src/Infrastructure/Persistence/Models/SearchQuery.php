@@ -7,6 +7,13 @@ namespace DevRadar\Infrastructure\Persistence\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Eloquent model for a versioned search query -- one of the query families
+ * that collection runs against X.
+ *
+ * Kept for relationship navigation only; the query source reads the table
+ * directly.
+ */
 class SearchQuery extends Model
 {
     protected $table = 'search_queries';

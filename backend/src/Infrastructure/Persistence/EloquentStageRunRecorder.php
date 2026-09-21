@@ -9,6 +9,16 @@ use DevRadar\Domain\Pipeline\StageOutcome;
 use DevRadar\Domain\Port\StageRunRecorderInterface;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Records every stage run in stage_runs: when it started, how it ended, and why.
+ *
+ * This table is the first place to look when a stage misbehaves. The `error`
+ * column holds the exception message, which is what identified the compliance
+ * provider's wrong constructor arguments after 193 unexplained failures.
+ *
+ * reapStale() closes runs whose worker died mid-flight, so a crash leaves an
+ * `abandoned` row rather than one that claims to be running forever.
+ */
 final readonly class EloquentStageRunRecorder implements StageRunRecorderInterface
 {
     public function begin(PipelineStage $stage): int

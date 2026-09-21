@@ -49,7 +49,7 @@ return new class extends Migration
         DB::statement("
             ALTER TABLE repositories
             ADD CONSTRAINT repositories_host_allowed
-            CHECK (host IN ('github','gitlab','bitbucket','codeberg','other'))
+            CHECK (host IN ('github.com','gitlab.com','bitbucket.org','codeberg.org','other'))
         ");
     }
 
